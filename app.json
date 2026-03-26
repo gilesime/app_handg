@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "LoyalRun",
+    "slug": "loyalrun",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "scheme": "loyalrun",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F0F1A"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.loyalrun.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "LoyalRun necesita tu ubicación para registrar tus recorridos y encontrar negocios cercanos.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "LoyalRun necesita tu ubicación en segundo plano para registrar tus actividades automáticamente.",
+        "NSLocationAlwaysUsageDescription": "LoyalRun necesita tu ubicación en segundo plano para registrar tus actividades.",
+        "UIBackgroundModes": ["location", "fetch"]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0F0F1A"
+      },
+      "package": "com.loyalrun.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "RECEIVE_BOOT_COMPLETED"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "LoyalRun necesita tu ubicación para registrar recorridos.",
+          "locationAlwaysPermission": "LoyalRun necesita ubicación en segundo plano para tracking."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#6366F1"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
