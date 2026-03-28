@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
 import { MMKV } from 'react-native-mmkv'
 import type { User, Club, ClubMember, GeoPoint, LiveActivityState } from '../types'
 
@@ -7,11 +7,11 @@ import type { User, Club, ClubMember, GeoPoint, LiveActivityState } from '../typ
 
 const storage = new MMKV({ id: 'loyalrun-store' })
 
-const mmkvStorage = {
+const mmkvStorage = createJSONStorage(() => ({
   getItem: (name: string) => storage.getString(name) ?? null,
   setItem: (name: string, value: string) => storage.set(name, value),
   removeItem: (name: string) => storage.delete(name),
-}
+}))
 
 // ─── Auth Store ───────────────────────────────────────────────────────────────
 
@@ -19,8 +19,10 @@ interface AuthState {
   user: User | null
   isLoading: boolean
   isAuthenticated: boolean
+  hasCompletedOnboarding: boolean
   setUser: (user: User | null) => void
   setLoading: (loading: boolean) => void
+  completeOnboarding: () => void
   clear: () => void
 }
 
@@ -30,9 +32,12 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isLoading: true,
       isAuthenticated: false,
+      hasCompletedOnboarding: false,
       setUser: (user) => set({ user, isAuthenticated: !!user, isLoading: false }),
       setLoading: (isLoading) => set({ isLoading }),
-      clear: () => set({ user: null, isAuthenticated: false, isLoading: false }),
+      completeOnboarding: () => set({ hasCompletedOnboarding: true }),
+      clear: () =>
+        set({ user: null, isAuthenticated: false, isLoading: false, hasCompletedOnboarding: false }),
     }),
     { name: 'auth', storage: mmkvStorage }
   )

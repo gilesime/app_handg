@@ -3,17 +3,18 @@ import {
   View, Text, StyleSheet, ScrollView,
   TouchableOpacity, Modal, Alert, ActivityIndicator
 } from 'react-native'
+import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useQuery } from '@tanstack/react-query'
-import { useAuthStore, useClubStore } from '../../stores/activity-store'
-import { auth } from '../../lib/supabase'
-import { badgeApi, clubApi } from '../../services/api'
-import { getLevelProgress, formatDistance } from '../../lib/xp-engine'
-import type { BadgeAward, Club } from '../../types'
+import { useAuthStore, useClubStore } from '@/stores/activity-store'
+import { auth } from '@/lib/supabase'
+import { badgeApi, clubApi } from '@/services/api'
+import { getLevelProgress } from '@/lib/xp-engine'
+import type { BadgeAward } from '@/types'
 
 export default function ProfileScreen() {
   const { user, clear: clearAuth } = useAuthStore()
-  const { activeClub, userClubs, setActiveClub, clear: clearClub } = useClubStore()
+  const { activeClub, setActiveClub, clear: clearClub } = useClubStore()
   const [showClubPicker, setShowClubPicker] = useState(false)
 
   const { data: badges, isLoading: loadingBadges } = useQuery({
@@ -125,6 +126,12 @@ export default function ProfileScreen() {
 
         {/* Actions */}
         <View style={styles.section}>
+          <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/history')}>
+            <Text style={styles.actionRowText}>Ver historial</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/onboarding')}>
+            <Text style={styles.actionRowText}>Ver onboarding</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.actionRow} onPress={handleSignOut}>
             <Text style={styles.actionRowTextDanger}>Cerrar sesión</Text>
           </TouchableOpacity>
@@ -268,6 +275,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.07)',
     alignItems: 'center',
   },
+  actionRowText: { color: '#FFFFFF', fontSize: 15, fontWeight: '500' },
   actionRowTextDanger: { color: '#EF4444', fontSize: 15, fontWeight: '500' },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },

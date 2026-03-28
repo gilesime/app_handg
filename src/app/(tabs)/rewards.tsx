@@ -5,10 +5,9 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { useClubStore } from '../../stores/activity-store'
-import { useAuthStore } from '../../stores/activity-store'
-import { rewardsApi } from '../../services/api'
-import type { BusinessOffer, RewardTransaction } from '../../types'
+import { useClubStore, useAuthStore } from '@/stores/activity-store'
+import { rewardsApi } from '@/services/api'
+import type { BusinessOffer, RewardTransaction } from '@/types'
 
 export default function RewardsScreen() {
   const { activeClub, membership } = useClubStore()

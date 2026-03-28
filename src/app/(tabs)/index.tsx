@@ -6,10 +6,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useQuery } from '@tanstack/react-query'
 import { router } from 'expo-router'
-import { useAuthStore, useClubStore } from '../../stores/activity-store'
-import { activityApi, clubApi, challengeApi } from '../../services/api'
-import { formatDistance, formatDuration, getLevelProgress } from '../../lib/xp-engine'
-import type { LeaderboardEntry, Challenge, Activity } from '../../types'
+import { useAuthStore, useClubStore } from '@/stores/activity-store'
+import { activityApi, clubApi, challengeApi } from '@/services/api'
+import { formatDistance, formatDuration, getLevelProgress } from '@/lib/xp-engine'
+import type { LeaderboardEntry, Challenge, Activity } from '@/types'
 
 export default function HomeScreen() {
   const { user } = useAuthStore()
@@ -95,6 +95,13 @@ export default function HomeScreen() {
           >
             <Text style={styles.actionBtnIcon}>🗺</Text>
             <Text style={styles.actionBtnText}>Ver mapa</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => router.push('/history')}
+          >
+            <Text style={styles.actionBtnIcon}>🕘</Text>
+            <Text style={styles.actionBtnText}>Historial</Text>
           </TouchableOpacity>
         </View>
 

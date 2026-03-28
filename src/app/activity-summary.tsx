@@ -5,8 +5,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, router } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
-import { activityApi, badgeApi } from '../services/api'
-import { formatDistance, formatDuration, formatPace } from '../lib/xp-engine'
+import { activityApi } from '@/services/api'
+import { formatDistance, formatDuration, formatPace } from '@/lib/xp-engine'
 
 export default function ActivitySummaryScreen() {
   const { activity_id } = useLocalSearchParams<{ activity_id: string }>()

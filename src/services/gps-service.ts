@@ -9,7 +9,7 @@ export const BACKGROUND_LOCATION_TASK = 'LOYALRUN_BACKGROUND_LOCATION'
 
 // ─── Task Definition (must be at module top-level) ────────────────────────────
 
-TaskManager.defineTask(BACKGROUND_LOCATION_TASK, ({ data, error }) => {
+TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
   if (error) {
     console.error('Background location error:', error)
     return

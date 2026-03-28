@@ -4,9 +4,9 @@ import MapView, { Marker, Circle, PROVIDER_GOOGLE } from 'react-native-maps'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import * as Location from 'expo-location'
 import { useQuery } from '@tanstack/react-query'
-import { useClubStore } from '../../stores/activity-store'
-import { rewardsApi } from '../../services/api'
-import type { BusinessOffer } from '../../types'
+import { useClubStore } from '@/stores/activity-store'
+import { rewardsApi } from '@/services/api'
+import type { BusinessOffer } from '@/types'
 
 export default function MapScreen() {
   const { activeClub } = useClubStore()

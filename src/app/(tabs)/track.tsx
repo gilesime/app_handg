@@ -8,9 +8,9 @@ import Animated, {
   useAnimatedStyle, withSpring, useSharedValue
 } from 'react-native-reanimated'
 import { router } from 'expo-router'
-import { useActivityTracker } from '../../hooks/useActivityTracker'
-import { formatDistance, formatDuration, formatPace } from '../../lib/xp-engine'
-import { useAuthStore } from '../../stores/activity-store'
+import { useActivityTracker } from '@/hooks/useActivityTracker'
+import { formatDistance, formatDuration, formatPace } from '@/lib/xp-engine'
+import { useAuthStore } from '@/stores/activity-store'
 
 const { width, height } = Dimensions.get('window')
 

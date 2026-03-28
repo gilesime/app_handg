@@ -4,11 +4,9 @@
     "slug": "loyalrun",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "scheme": "loyalrun",
     "splash": {
-      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#0F0F1A"
     },
@@ -23,10 +21,6 @@
       }
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0F0F1A"
-      },
       "package": "com.loyalrun.app",
       "permissions": [
         "ACCESS_FINE_LOCATION",
@@ -49,7 +43,6 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/notification-icon.png",
           "color": "#6366F1"
         }
       ]
