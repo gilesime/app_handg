@@ -7,6 +7,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 import { supabase } from '@/lib/supabase'
+import { demoUser } from '@/lib/demo-data'
+import { isDemoMode } from '@/lib/demo-mode'
 import { useAuthStore, useClubStore } from '@/stores/activity-store'
 import type { User } from '@/types'
 
@@ -45,6 +47,11 @@ function AuthProvider() {
   const { activeClub } = useClubStore()
 
   useEffect(() => {
+    if (isDemoMode) {
+      setLoading(false)
+      return
+    }
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         const profile = await fetchProfile(session.user)

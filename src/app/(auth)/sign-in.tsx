@@ -3,9 +3,13 @@ import { Alert, Button, StyleSheet, TextInput } from 'react-native'
 import { Link, router } from 'expo-router'
 
 import { AuthScaffold } from '@/components/wireframe/AuthScaffold'
+import { demoUser } from '@/lib/demo-data'
+import { isDemoMode } from '@/lib/demo-mode'
 import { auth } from '@/lib/supabase'
+import { useAuthStore } from '@/stores/activity-store'
 
 export default function SignInScreen() {
+  const setUser = useAuthStore((state) => state.setUser)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -19,6 +23,14 @@ export default function SignInScreen() {
     try {
       setIsSubmitting(true)
       await auth.signIn(email.trim(), password)
+      if (isDemoMode) {
+        setUser(
+          demoUser({
+            email: email.trim(),
+            display_name: email.split('@')[0] ?? 'Demo Runner',
+          })
+        )
+      }
       router.replace('/select-club')
     } catch (error) {
       Alert.alert('No se pudo iniciar sesión', getErrorMessage(error))

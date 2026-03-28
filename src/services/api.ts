@@ -1,4 +1,19 @@
 import { supabase } from '../lib/supabase'
+import { isDemoMode } from '@/lib/demo-mode'
+import {
+  createDemoActivity,
+  demoBadgeAwards,
+  demoChallenges,
+  demoClubs,
+  demoLeaderboard,
+  demoOffers,
+  generateDemoRedemption,
+  getDemoActivity,
+  getDemoRewardHistory,
+  getDemoUserClubs,
+  joinDemoClub,
+  listDemoActivities,
+} from '@/lib/demo-data'
 import type {
   Activity, Club, ClubMember, Challenge, BusinessOffer,
   RewardTransaction, Badge, BadgeAward, LeaderboardEntry,
@@ -20,6 +35,9 @@ export const activityApi = {
     started_at: string
     ended_at: string
   }): Promise<Activity> => {
+    if (isDemoMode) {
+      return createDemoActivity(params)
+    }
     const { data, error } = await supabase
       .functions.invoke('activity-complete', { body: params })
 
@@ -33,6 +51,21 @@ export const activityApi = {
     limit?: number
     offset?: number
   }): Promise<PaginatedResponse<Activity>> => {
+    if (isDemoMode) {
+      const data = listDemoActivities(params.club_id).slice(
+        params.offset ?? 0,
+        (params.offset ?? 0) + (params.limit ?? 20)
+      )
+      const total = listDemoActivities(params.club_id).length
+
+      return {
+        data,
+        count: total,
+        page: Math.floor((params.offset ?? 0) / (params.limit ?? 20)),
+        page_size: params.limit ?? 20,
+        has_more: total > (params.offset ?? 0) + (params.limit ?? 20),
+      }
+    }
     let query = supabase
       .from('activities')
       .select('*', { count: 'exact' })
@@ -57,6 +90,9 @@ export const activityApi = {
 
   /** Get single activity with route data */
   get: async (id: string): Promise<Activity> => {
+    if (isDemoMode) {
+      return getDemoActivity(id)
+    }
     const { data, error } = await supabase
       .from('activities')
       .select('*')
@@ -73,6 +109,9 @@ export const activityApi = {
 export const clubApi = {
   /** Get clubs the user belongs to */
   getUserClubs: async (): Promise<(Club & { membership: ClubMember })[]> => {
+    if (isDemoMode) {
+      return getDemoUserClubs()
+    }
     const { data, error } = await supabase
       .from('club_members')
       .select(`
@@ -87,6 +126,11 @@ export const clubApi = {
 
   /** Get club by slug (for deep links / sharing) */
   getBySlug: async (slug: string): Promise<Club> => {
+    if (isDemoMode) {
+      const club = demoClubs.find((item) => item.slug === slug)
+      if (!club) throw new Error('Club no encontrado')
+      return club
+    }
     const { data, error } = await supabase
       .from('clubs')
       .select('*')
@@ -99,6 +143,9 @@ export const clubApi = {
 
   /** Join a club */
   join: async (club_id: string): Promise<ClubMember> => {
+    if (isDemoMode) {
+      return joinDemoClub(club_id)
+    }
     const { data, error } = await supabase
       .from('club_members')
       .insert({ club_id, role: 'member' })
@@ -114,6 +161,9 @@ export const clubApi = {
     club_id: string,
     period: 'weekly' | 'monthly' | 'all_time' = 'weekly'
   ): Promise<LeaderboardEntry[]> => {
+    if (isDemoMode) {
+      return demoLeaderboard
+    }
     const { data, error } = await supabase
       .rpc('get_club_leaderboard', { p_club_id: club_id, p_period: period })
 
@@ -126,6 +176,9 @@ export const clubApi = {
 
 export const challengeApi = {
   list: async (club_id: string): Promise<Challenge[]> => {
+    if (isDemoMode) {
+      return demoChallenges.filter((challenge) => challenge.club_id === club_id)
+    }
     const now = new Date().toISOString()
     const { data, error } = await supabase
       .from('challenges')
@@ -139,6 +192,13 @@ export const challengeApi = {
   },
 
   getUserProgress: async (challenge_id: string): Promise<{ progress: number; completed: boolean }> => {
+    if (isDemoMode) {
+      const challenge = demoChallenges.find((item) => item.id === challenge_id)
+      return {
+        progress: challenge?.progress ?? 0,
+        completed: Boolean(challenge && (challenge.progress ?? 0) >= challenge.criteria.target_value),
+      }
+    }
     const { data, error } = await supabase
       .rpc('get_challenge_progress', { p_challenge_id: challenge_id })
 
@@ -152,6 +212,9 @@ export const challengeApi = {
 export const rewardsApi = {
   /** Get available offers for a club */
   getOffers: async (club_id: string, nearbyKm?: number): Promise<BusinessOffer[]> => {
+    if (isDemoMode) {
+      return demoOffers.filter((offer) => offer.club_id === club_id)
+    }
     const { data, error } = await supabase
       .from('business_offers')
       .select(`
@@ -169,6 +232,9 @@ export const rewardsApi = {
 
   /** Generate a QR code token for redemption */
   generateRedemption: async (offer_id: string): Promise<RewardTransaction> => {
+    if (isDemoMode) {
+      return generateDemoRedemption(offer_id)
+    }
     const { data, error } = await supabase
       .functions.invoke('generate-redemption', { body: { offer_id } })
 
@@ -178,6 +244,9 @@ export const rewardsApi = {
 
   /** Get user's redemption history */
   getHistory: async (): Promise<RewardTransaction[]> => {
+    if (isDemoMode) {
+      return getDemoRewardHistory()
+    }
     const { data, error } = await supabase
       .from('reward_transactions')
       .select(`*, offer:business_offers(*, business:businesses(*))`)
@@ -192,6 +261,9 @@ export const rewardsApi = {
 
 export const badgeApi = {
   getUserBadges: async (user_id?: string): Promise<BadgeAward[]> => {
+    if (isDemoMode) {
+      return demoBadgeAwards.filter((award) => !user_id || award.user_id === user_id)
+    }
     const query = user_id
       ? supabase.from('badge_awards').select('*, badge:badges(*)').eq('user_id', user_id)
       : supabase.from('badge_awards').select('*, badge:badges(*)')

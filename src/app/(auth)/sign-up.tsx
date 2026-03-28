@@ -3,9 +3,13 @@ import { Alert, Button, StyleSheet, TextInput } from 'react-native'
 import { Link, router } from 'expo-router'
 
 import { AuthScaffold } from '@/components/wireframe/AuthScaffold'
+import { demoUser } from '@/lib/demo-data'
+import { isDemoMode } from '@/lib/demo-mode'
 import { auth } from '@/lib/supabase'
+import { useAuthStore } from '@/stores/activity-store'
 
 export default function SignUpScreen() {
+  const setUser = useAuthStore((state) => state.setUser)
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -20,6 +24,16 @@ export default function SignUpScreen() {
     try {
       setIsSubmitting(true)
       await auth.signUp(email.trim(), password, displayName.trim())
+      if (isDemoMode) {
+        setUser(
+          demoUser({
+            email: email.trim(),
+            display_name: displayName.trim(),
+          })
+        )
+        router.replace('/select-club')
+        return
+      }
       Alert.alert(
         'Cuenta creada',
         'Si tu proyecto requiere confirmación por correo, revisa tu email antes de entrar.'
