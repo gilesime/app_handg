@@ -124,6 +124,7 @@ function AuthProvider() {
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="select-club" />
       <Stack.Screen name="history" />
+      <Stack.Screen name="devices" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="activity-summary" options={{ presentation: 'modal' }} />
     </Stack>

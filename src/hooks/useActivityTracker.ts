@@ -6,11 +6,19 @@ import { startTracking, stopTracking } from '../services/gps-service'
 import { calculateActivityXP } from '../lib/xp-engine'
 import { activityApi } from '../services/api'
 import { useQueryClient } from '@tanstack/react-query'
+import { useWearableStore } from '@/stores/wearable-store'
+import { useWearableSession } from '@/hooks/useWearableSession'
+import { composeWearableSessionDraft } from '@/services/wearables/session-composer'
+import { wearablesService } from '@/services/wearables'
 
 export function useActivityTracker() {
   const store = useActivityStore()
   const { user } = useAuthStore()
   const { activeClub } = useClubStore()
+  const wearableSession = useWearableSession()
+  const connectedDevice = useWearableStore((state) => state.connectedDevice)
+  const sessionSamples = useWearableStore((state) => state.sessionSamples)
+  const setLastSessionDraft = useWearableStore((state) => state.setLastSessionDraft)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const queryClient = useQueryClient()
 
@@ -37,27 +45,33 @@ export function useActivityTracker() {
     if (!user || !activeClub) throw new Error('Necesitas estar en un club para registrar actividad')
     store.startSession()
     await startTracking()
-  }, [user, activeClub])
+    await wearableSession.startSession()
+  }, [user, activeClub, store, wearableSession])
 
   // ── Pause ─────────────────────────────────────────────────────────────────
   const pause = useCallback(async () => {
     store.pauseSession()
     await stopTracking()
-  }, [])
+    await wearableSession.stopSession()
+  }, [store, wearableSession])
 
   // ── Resume ────────────────────────────────────────────────────────────────
   const resume = useCallback(async () => {
     store.resumeSession()
     await startTracking()
-  }, [])
+    await wearableSession.startSession()
+  }, [store, wearableSession])
 
   // ── Finish and save ───────────────────────────────────────────────────────
   const finish = useCallback(async () => {
-    if (!activeClub) throw new Error('No hay club activo')
+    if (!activeClub || !user) throw new Error('No hay club activo')
     await stopTracking()
+    await wearableSession.stopSession()
     store.stopSession()
 
     const { live, sessionStartTime } = useActivityStore.getState()
+    const startedAt = sessionStartTime ? new Date(sessionStartTime).toISOString() : new Date().toISOString()
+    const endedAt = new Date().toISOString()
 
     const activity = await activityApi.create({
       club_id: activeClub.id,
@@ -67,9 +81,28 @@ export function useActivityTracker() {
       avg_pace_s_per_km: live.current_pace_s_per_km,
       elevation_gain_m: live.elevation_gain_m,
       route_points: live.points,
-      started_at: sessionStartTime ? new Date(sessionStartTime).toISOString() : new Date().toISOString(),
-      ended_at: new Date().toISOString(),
+      started_at: startedAt,
+      ended_at: endedAt,
     })
+
+    if (connectedDevice && sessionSamples.length > 0) {
+      const draft = composeWearableSessionDraft({
+        user,
+        club: activeClub,
+        deviceId: connectedDevice.id,
+        startedAt,
+        endedAt,
+        distanceKm: live.distance_km,
+        durationS: live.elapsed_s,
+        elevationGainM: live.elevation_gain_m,
+        heartRateSamples: sessionSamples,
+      })
+
+      draft.activity_id = activity.id
+
+      const savedDraft = await wearablesService.createSessionDraft(draft)
+      setLastSessionDraft(savedDraft)
+    }
 
     // Invalidate relevant queries so UI refreshes
     queryClient.invalidateQueries({ queryKey: ['activities'] })
@@ -85,13 +118,14 @@ export function useActivityTracker() {
     store.reset()
 
     return { activity, xpResult }
-  }, [activeClub])
+  }, [activeClub, connectedDevice, queryClient, sessionSamples, setLastSessionDraft, store, user, wearableSession])
 
   // ── Discard ───────────────────────────────────────────────────────────────
   const discard = useCallback(async () => {
     await stopTracking()
+    await wearableSession.stopSession()
     store.reset()
-  }, [])
+  }, [store, wearableSession])
 
   return {
     live: store.live,

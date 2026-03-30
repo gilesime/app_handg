@@ -121,3 +121,5 @@ npm run type-check
 - Si el usuario autenticado no tiene fila en `profiles`, el layout crea un perfil fallback en memoria para no bloquear el flujo.
 - `components/` sigue disponible para extraer UI reutilizable cuando empecemos a refinar la interfaz.
 - Si quieres una siguiente fase, lo natural seria agregar onboarding, recovery password y pantallas CRUD para retos o historial de actividades.
+- La arquitectura propuesta para wearables esta en `docs/wearables-architecture.md`.
+- La base inicial de schema para wearables esta en `supabase/migrations/002_wearable_foundation.sql`.

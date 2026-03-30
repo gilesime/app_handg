@@ -78,6 +78,9 @@ const INITIAL_LIVE_STATE: LiveActivityState = {
   elevation_gain_m: 0,
   points: [],
   calories_estimate: 0,
+  current_heart_rate_bpm: null,
+  avg_heart_rate_bpm: null,
+  max_heart_rate_bpm: null,
 }
 
 interface ActivityState {
@@ -93,6 +96,7 @@ interface ActivityState {
   stopSession: () => void
   addPoint: (point: GeoPoint) => void
   updateStats: (stats: Partial<LiveActivityState>) => void
+  updateHeartRate: (bpm: number) => void
   reset: () => void
 }
 
@@ -198,6 +202,23 @@ export const useActivityStore = create<ActivityState>()((set, get) => ({
 
   updateStats: (stats) => {
     set((state) => ({ live: { ...state.live, ...stats } }))
+  },
+
+  updateHeartRate: (bpm) => {
+    set((state) => {
+      const sampleCount = state.live.elapsed_s > 0 ? Math.max(1, Math.floor(state.live.elapsed_s / 5)) : 1
+      const previousAvg = state.live.avg_heart_rate_bpm ?? bpm
+      const nextAvg = Math.round(((previousAvg * (sampleCount - 1)) + bpm) / sampleCount)
+
+      return {
+        live: {
+          ...state.live,
+          current_heart_rate_bpm: bpm,
+          avg_heart_rate_bpm: nextAvg,
+          max_heart_rate_bpm: Math.max(state.live.max_heart_rate_bpm ?? bpm, bpm),
+        },
+      }
+    })
   },
 
   reset: () => {

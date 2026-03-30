@@ -126,6 +126,9 @@ export default function ProfileScreen() {
 
         {/* Actions */}
         <View style={styles.section}>
+          <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/devices')}>
+            <Text style={styles.actionRowText}>Gestionar wearables</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/history')}>
             <Text style={styles.actionRowText}>Ver historial</Text>
           </TouchableOpacity>

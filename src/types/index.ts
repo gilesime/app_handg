@@ -81,6 +81,8 @@ export interface Activity {
   avg_pace_s_per_km: number
   elevation_gain_m: number
   xp_earned: number
+  avg_heart_rate_bpm?: number
+  max_heart_rate_bpm?: number
   route_points: GeoPoint[]
   started_at: string
   ended_at?: string
@@ -94,6 +96,9 @@ export interface LiveActivityState {
   elevation_gain_m: number
   points: GeoPoint[]
   calories_estimate: number
+  current_heart_rate_bpm: number | null
+  avg_heart_rate_bpm: number | null
+  max_heart_rate_bpm: number | null
 }
 
 // ─── Gaming / XP Types ────────────────────────────────────────────────────────
