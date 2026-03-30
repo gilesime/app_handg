@@ -3,6 +3,7 @@
     "name": "LoyalRun",
     "slug": "loyalrun",
     "version": "1.0.0",
+    "newArchEnabled": true,
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "scheme": "loyalrun",
