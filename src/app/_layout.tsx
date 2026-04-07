@@ -136,7 +136,7 @@ function AuthGate() {
       return
     }
 
-    if (inAuthGroup || inConsentPreferences || inClubSelection) {
+    if (inAuthGroup) {
       router.replace('/(tabs)')
     }
   }, [activeClub, canNavigate, isAuthenticated, isLoading, rootNavigationState?.key, router, segments, user])

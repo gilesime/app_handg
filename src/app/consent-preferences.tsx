@@ -54,6 +54,15 @@ export default function ConsentPreferencesScreen() {
     [inAppNotificationsEnabled, marketingEmailEnabled, marketingPushEnabled, operationalPushEnabled]
   )
 
+  const handleBack = () => {
+    if (!isFirstSetup && activeClub) {
+      router.back()
+      return
+    }
+
+    router.replace('/(auth)/sign-in')
+  }
+
   const handleSave = async () => {
     if (!user) return
 
@@ -118,6 +127,9 @@ export default function ConsentPreferencesScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.hero}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <Text style={styles.backButtonText}>← Volver</Text>
+          </TouchableOpacity>
           <Text style={styles.title}>Privacidad y comunicaciones</Text>
           <Text style={styles.subtitle}>
             Gestiona el consentimiento para comunicaciones operativas, promociones y mensajes dentro
@@ -235,6 +247,19 @@ const styles = StyleSheet.create({
   },
   hero: {
     gap: 8,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#EEF2FF',
+    marginBottom: 4,
+  },
+  backButtonText: {
+    color: '#4338CA',
+    fontSize: 14,
+    fontWeight: '700',
   },
   title: {
     fontSize: 30,

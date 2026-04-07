@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
+import { router } from 'expo-router'
 
 import { useWearableSession } from '@/hooks/useWearableSession'
 import { useWearableStore } from '@/stores/wearable-store'
@@ -44,6 +45,9 @@ export default function DevicesScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backButtonText}>← Volver</Text>
+        </TouchableOpacity>
         <Text style={styles.title}>Dispositivos wearable</Text>
         <Text>Fase 1: pulsometro BLE + GPS del telefono.</Text>
 
@@ -102,6 +106,18 @@ function getErrorMessage(error: unknown) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { flex: 1, padding: 24, gap: 16 },
+  backButton: {
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: '#EEF2FF',
+  },
+  backButtonText: {
+    color: '#4338CA',
+    fontWeight: '700',
+    fontSize: 14,
+  },
   title: { fontSize: 28, fontWeight: '700' },
   card: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, gap: 8 },
   cardTitle: { fontSize: 18, fontWeight: '600' },

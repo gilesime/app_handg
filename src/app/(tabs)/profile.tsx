@@ -18,6 +18,7 @@ export default function ProfileScreen() {
   const { activeClub, clear: clearClub } = useClubStore()
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [isSavingProfile, setIsSavingProfile] = useState(false)
 
   const { data: badges, isLoading: loadingBadges } = useQuery({
@@ -62,6 +63,7 @@ export default function ProfileScreen() {
         email: nextEmail,
       })
       setUser(updatedUser)
+      setIsEditingProfile(false)
       Alert.alert(
         'Perfil actualizado',
         nextEmail !== user.email.toLowerCase()
@@ -137,53 +139,76 @@ export default function ProfileScreen() {
 
         {/* Editable profile */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Mis datos</Text>
-          <View style={styles.formCard}>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Nombre visible</Text>
-              <Text style={styles.fieldHint}>
-                Es el nombre que mostraremos en tu perfil, ranking y retos.
-              </Text>
-              <TextInput
-                autoCapitalize="words"
-                placeholder="Tu nombre"
-                style={styles.input}
-                value={displayName}
-                onChangeText={setDisplayName}
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Correo electronico</Text>
-              <Text style={styles.fieldHint}>
-                Este correo se usa para iniciar sesion y recuperar tu cuenta.
-              </Text>
-              <TextInput
-                autoCapitalize="none"
-                autoComplete="email"
-                autoCorrect={false}
-                keyboardType="email-address"
-                placeholder="tu@correo.com"
-                spellCheck={false}
-                style={styles.input}
-                textContentType="emailAddress"
-                value={email}
-                onChangeText={setEmail}
-              />
-            </View>
-
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>Mis datos</Text>
             <TouchableOpacity
-              style={[
-                styles.primaryAction,
-                (!hasProfileChanges || isSavingProfile) && styles.primaryActionDisabled,
-              ]}
-              onPress={handleSaveProfile}
-              disabled={!hasProfileChanges || isSavingProfile}
+              style={styles.inlineSecondaryAction}
+              onPress={() => setIsEditingProfile((value) => !value)}
             >
-              <Text style={styles.primaryActionText}>
-                {isSavingProfile ? 'Guardando...' : 'Guardar cambios'}
+              <Text style={styles.inlineSecondaryActionText}>
+                {isEditingProfile ? 'Cancelar' : 'Editar perfil'}
               </Text>
             </TouchableOpacity>
+          </View>
+          <View style={styles.formCard}>
+            <Text style={styles.profileSummaryLabel}>Nombre actual</Text>
+            <Text style={styles.profileSummaryValue}>{user.display_name}</Text>
+            <Text style={styles.profileSummaryLabel}>Correo actual</Text>
+            <Text style={styles.profileSummaryValue}>{user.email}</Text>
+
+            {!isEditingProfile ? (
+              <Text style={styles.fieldHint}>
+                Usa el boton "Editar perfil" para cambiar tu nombre visible o tu correo electronico.
+              </Text>
+            ) : (
+              <>
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>Nombre visible</Text>
+                  <Text style={styles.fieldHint}>
+                    Es el nombre que mostraremos en tu perfil, ranking y retos.
+                  </Text>
+                  <TextInput
+                    autoCapitalize="words"
+                    placeholder="Tu nombre"
+                    style={styles.input}
+                    value={displayName}
+                    onChangeText={setDisplayName}
+                  />
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>Correo electronico</Text>
+                  <Text style={styles.fieldHint}>
+                    Este correo se usa para iniciar sesion y recuperar tu cuenta.
+                  </Text>
+                  <TextInput
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    autoCorrect={false}
+                    keyboardType="email-address"
+                    placeholder="tu@correo.com"
+                    spellCheck={false}
+                    style={styles.input}
+                    textContentType="emailAddress"
+                    value={email}
+                    onChangeText={setEmail}
+                  />
+                </View>
+
+                <TouchableOpacity
+                  style={[
+                    styles.primaryAction,
+                    (!hasProfileChanges || isSavingProfile) && styles.primaryActionDisabled,
+                  ]}
+                  onPress={handleSaveProfile}
+                  disabled={!hasProfileChanges || isSavingProfile}
+                >
+                  <Text style={styles.primaryActionText}>
+                    {isSavingProfile ? 'Guardando...' : 'Guardar cambios'}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
 
@@ -336,7 +361,24 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 },
 
   section: { paddingHorizontal: 16, marginTop: 20 },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   sectionTitle: { fontSize: 17, fontWeight: '700', color: '#FFFFFF', marginBottom: 12 },
+  inlineSecondaryAction: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(99,102,241,0.14)',
+  },
+  inlineSecondaryActionText: {
+    color: '#C7D2FE',
+    fontSize: 13,
+    fontWeight: '700',
+  },
   formCard: {
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 14,
@@ -344,6 +386,16 @@ const styles = StyleSheet.create({
     gap: 16,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.07)',
+  },
+  profileSummaryLabel: {
+    color: 'rgba(255,255,255,0.45)',
+    fontSize: 12,
+    marginBottom: 2,
+  },
+  profileSummaryValue: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   fieldGroup: {
     gap: 6,
