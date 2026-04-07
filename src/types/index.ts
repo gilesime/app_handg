@@ -37,6 +37,14 @@ export interface UserPreferences {
   units: 'km' | 'miles'
   notifications_enabled: boolean
   privacy_mode: 'public' | 'club_only' | 'private'
+  privacy_policy_accepted: boolean
+  data_use_accepted: boolean
+  marketing_push_enabled: boolean
+  marketing_email_enabled: boolean
+  in_app_notifications_enabled: boolean
+  communications_choice_recorded: boolean
+  consent_version: string
+  consent_updated_at?: string
 }
 
 export interface ClubMember {
@@ -81,6 +89,8 @@ export interface Activity {
   avg_pace_s_per_km: number
   elevation_gain_m: number
   xp_earned: number
+  avg_heart_rate_bpm?: number
+  max_heart_rate_bpm?: number
   route_points: GeoPoint[]
   started_at: string
   ended_at?: string
@@ -94,6 +104,9 @@ export interface LiveActivityState {
   elevation_gain_m: number
   points: GeoPoint[]
   calories_estimate: number
+  current_heart_rate_bpm: number | null
+  avg_heart_rate_bpm: number | null
+  max_heart_rate_bpm: number | null
 }
 
 // ─── Gaming / XP Types ────────────────────────────────────────────────────────

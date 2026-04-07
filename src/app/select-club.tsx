@@ -29,12 +29,6 @@ export default function SelectClubScreen() {
   useEffect(() => {
     if (!clubsQuery.data) return
     setUserClubs(clubsQuery.data)
-
-    if (!activeClub && clubsQuery.data.length === 1) {
-      const club = clubsQuery.data[0]
-      setActiveClub(club, club.membership)
-      router.replace('/(tabs)')
-    }
   }, [activeClub, clubsQuery.data, setActiveClub, setUserClubs])
 
   const joinMutation = useMutation({
@@ -64,11 +58,23 @@ export default function SelectClubScreen() {
     joinMutation.mutate(clubSlug)
   }
 
+  const handleBack = () => {
+    if (activeClub) {
+      router.back()
+      return
+    }
+
+    router.replace('/consent-preferences' as never)
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <Text style={styles.backButtonText}>← Volver</Text>
+        </TouchableOpacity>
         <Text style={styles.title}>Seleccionar club</Text>
-        <Text>Antes de usar el app, elige uno de tus clubes o únete por slug.</Text>
+        <Text>Antes de usar el app, elige uno de tus clubes o unete por slug. No avanzaremos hasta que lo selecciones.</Text>
 
         <WireframeSection>
           <Text style={styles.sectionTitle}>Mis clubes</Text>
@@ -88,8 +94,11 @@ export default function SelectClubScreen() {
                     router.replace('/(tabs)')
                   }}
                 >
-                  <Text style={styles.rowTitle}>{item.name}</Text>
-                  <Text>{item.sport_type}</Text>
+                  <View style={styles.rowInfo}>
+                    <Text style={styles.rowTitle}>{item.name}</Text>
+                    <Text style={styles.rowMeta}>{item.sport_type}</Text>
+                  </View>
+                  <Text style={styles.rowAction}>Seleccionar</Text>
                 </TouchableOpacity>
               )}
             />
@@ -98,6 +107,10 @@ export default function SelectClubScreen() {
 
         <WireframeSection>
           <Text style={styles.sectionTitle}>Unirme por slug</Text>
+          <Text style={styles.label}>Slug del club</Text>
+          <Text style={styles.helperText}>
+            Escribe el identificador corto que te compartio el administrador del club.
+          </Text>
           <TextInput
             autoCapitalize="none"
             placeholder="ej. corredores-centro"
@@ -123,10 +136,40 @@ function getErrorMessage(error: unknown) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { flex: 1, padding: 24, gap: 24 },
+  backButton: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#EEF2FF',
+  },
+  backButtonText: {
+    color: '#4338CA',
+    fontSize: 14,
+    fontWeight: '700',
+  },
   title: { fontSize: 28, fontWeight: '700' },
   section: { gap: 12 },
   sectionTitle: { fontSize: 18, fontWeight: '600' },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 8 },
+  label: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  helperText: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+  },
   row: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, marginBottom: 8 },
+  rowInfo: { flex: 1 },
   rowTitle: { fontSize: 16, fontWeight: '600' },
+  rowMeta: { color: '#6B7280', marginTop: 2 },
+  rowAction: { color: '#4F46E5', fontWeight: '600' },
 })

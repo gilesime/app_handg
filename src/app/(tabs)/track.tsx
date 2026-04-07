@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react'
 import {
-  View, Text, StyleSheet, TouchableOpacity, Alert, Dimensions
+  View, Text, StyleSheet, TouchableOpacity, Alert, Dimensions, Platform
 } from 'react-native'
 import MapView, { Polyline, PROVIDER_GOOGLE } from 'react-native-maps'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -11,16 +11,19 @@ import { router } from 'expo-router'
 import { useActivityTracker } from '@/hooks/useActivityTracker'
 import { formatDistance, formatDuration, formatPace } from '@/lib/xp-engine'
 import { useAuthStore } from '@/stores/activity-store'
+import { useWearableStore } from '@/stores/wearable-store'
 
 const { width, height } = Dimensions.get('window')
 
 export default function TrackScreen() {
   const tracker = useActivityTracker()
   const { user } = useAuthStore()
+  const connectedDevice = useWearableStore((state) => state.connectedDevice)
   const [isFinishing, setIsFinishing] = useState(false)
   const buttonScale = useSharedValue(1)
 
   const units = user?.preferences?.units ?? 'km'
+  const mapProvider = Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined
 
   const animatedButton = useAnimatedStyle(() => ({
     transform: [{ scale: buttonScale.value }],
@@ -85,7 +88,7 @@ export default function TrackScreen() {
       {/* Map */}
       <MapView
         style={styles.map}
-        provider={PROVIDER_GOOGLE}
+        provider={mapProvider}
         region={mapRegion}
         showsUserLocation
         followsUserLocation={tracker.isActive}
@@ -123,6 +126,11 @@ export default function TrackScreen() {
 
         <View style={styles.statsRow}>
           <StatBox
+            label="Pulso"
+            value={tracker.live.current_heart_rate_bpm ? `${tracker.live.current_heart_rate_bpm} bpm` : '—'}
+            small
+          />
+          <StatBox
             label="Calorías"
             value={`${tracker.live.calories_estimate} kcal`}
             small
@@ -133,6 +141,13 @@ export default function TrackScreen() {
             small
           />
         </View>
+
+        <TouchableOpacity style={styles.deviceRow} onPress={() => router.push('/devices')}>
+          <Text style={styles.deviceRowLabel}>Pulsometro</Text>
+          <Text style={styles.deviceRowValue}>
+            {connectedDevice ? connectedDevice.device_name : 'Conectar dispositivo'}
+          </Text>
+        </TouchableOpacity>
 
         {/* Status indicator */}
         {tracker.isPaused && (
@@ -239,6 +254,15 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(251, 191, 36, 0.4)',
   },
   pausedText: { color: '#FBBf24', fontSize: 13, fontWeight: '600', letterSpacing: 1 },
+  deviceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+  },
+  deviceRowLabel: { color: 'rgba(255,255,255,0.65)', fontSize: 13 },
+  deviceRowValue: { color: '#FFFFFF', fontSize: 14, fontWeight: '600' },
   controls: { flexDirection: 'row', gap: 12, marginTop: 8 },
   mainButton: {
     flex: 1,

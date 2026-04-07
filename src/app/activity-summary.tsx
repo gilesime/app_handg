@@ -7,9 +7,11 @@ import { useLocalSearchParams, router } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import { activityApi } from '@/services/api'
 import { formatDistance, formatDuration, formatPace } from '@/lib/xp-engine'
+import { useWearableStore } from '@/stores/wearable-store'
 
 export default function ActivitySummaryScreen() {
   const { activity_id } = useLocalSearchParams<{ activity_id: string }>()
+  const lastSessionDraft = useWearableStore((state) => state.lastSessionDraft)
 
   const fadeAnim = useRef(new Animated.Value(0)).current
   const slideAnim = useRef(new Animated.Value(40)).current
@@ -20,6 +22,8 @@ export default function ActivitySummaryScreen() {
     queryFn: () => activityApi.get(activity_id!),
     enabled: !!activity_id,
   })
+
+  const wearableSummary = lastSessionDraft?.activity_id === activity_id ? lastSessionDraft : null
 
   useEffect(() => {
     Animated.parallel([
@@ -89,6 +93,27 @@ export default function ActivitySummaryScreen() {
           })}
         </Text>
 
+        {wearableSummary && (
+          <Animated.View style={[
+            styles.statsCard,
+            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
+          ]}>
+            <Text style={styles.wearableTitle}>Resumen wearable</Text>
+            <View style={styles.wearableRow}>
+              <Text style={styles.wearableLabel}>Pulso promedio</Text>
+              <Text style={styles.wearableValue}>{wearableSummary.avg_heart_rate ?? 0} bpm</Text>
+            </View>
+            <View style={styles.wearableRow}>
+              <Text style={styles.wearableLabel}>Pulso maximo</Text>
+              <Text style={styles.wearableValue}>{wearableSummary.max_heart_rate ?? 0} bpm</Text>
+            </View>
+            <View style={styles.wearableRow}>
+              <Text style={styles.wearableLabel}>Muestras</Text>
+              <Text style={styles.wearableValue}>{wearableSummary.heart_rate_samples?.length ?? 0}</Text>
+            </View>
+          </Animated.View>
+        )}
+
         {/* Actions */}
         <View style={styles.actions}>
           <TouchableOpacity
@@ -149,6 +174,10 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.3)', fontSize: 13, marginBottom: 32,
     textTransform: 'capitalize',
   },
+  wearableTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', marginBottom: 12 },
+  wearableRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  wearableLabel: { color: 'rgba(255,255,255,0.55)' },
+  wearableValue: { color: '#FFFFFF', fontWeight: '600' },
 
   actions: { width: '100%', gap: 12 },
   primaryBtn: {

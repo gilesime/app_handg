@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Alert, Button, StyleSheet, TextInput } from 'react-native'
+import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native'
 import { Link, router } from 'expo-router'
 
 import { AuthScaffold } from '@/components/wireframe/AuthScaffold'
@@ -40,22 +40,34 @@ export default function SignInScreen() {
   }
 
   return (
-    <AuthScaffold title="Iniciar sesión" subtitle="Accede para continuar al flujo principal del app.">
+    <AuthScaffold title="Iniciar sesión" subtitle="Accede con tu cuenta para continuar al flujo principal de LoyalRun.">
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Correo electronico</Text>
+          <Text style={styles.helperText}>Ingresa el correo con el que registraste tu cuenta.</Text>
         <TextInput
           autoCapitalize="none"
+          autoComplete="email"
+          autoCorrect={false}
           keyboardType="email-address"
-          placeholder="Correo"
+          placeholder="tu@correo.com"
+          spellCheck={false}
           style={styles.input}
+          textContentType="emailAddress"
           value={email}
           onChangeText={setEmail}
         />
+        </View>
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Password</Text>
+          <Text style={styles.helperText}>Escribe tu clave para entrar a tu cuenta.</Text>
         <TextInput
-          placeholder="Password"
+          placeholder="Tu password"
           secureTextEntry
           style={styles.input}
           value={password}
           onChangeText={setPassword}
         />
+        </View>
 
         <Button
           title={isSubmitting ? 'Entrando...' : 'Entrar'}
@@ -78,6 +90,24 @@ function getErrorMessage(error: unknown) {
 }
 
 const styles = StyleSheet.create({
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 8 },
+  fieldGroup: {
+    gap: 6,
+  },
+  label: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  helperText: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+  },
   link: { marginTop: 8 },
 })

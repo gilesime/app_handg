@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Alert, Button, StyleSheet, TextInput } from 'react-native'
+import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native'
 import { Link } from 'expo-router'
 
 import { AuthScaffold } from '@/components/wireframe/AuthScaffold'
@@ -27,15 +27,23 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <AuthScaffold title="Recuperar password" subtitle="Envio basico de recovery email con Supabase Auth.">
-      <TextInput
-        autoCapitalize="none"
-        keyboardType="email-address"
-        placeholder="Correo"
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-      />
+    <AuthScaffold title="Recuperar password" subtitle="Te enviaremos un enlace de recuperacion al correo asociado a tu cuenta.">
+      <View style={styles.fieldGroup}>
+        <Text style={styles.label}>Correo electronico</Text>
+        <Text style={styles.helperText}>Usa el mismo correo con el que inicias sesion en la app.</Text>
+        <TextInput
+          autoCapitalize="none"
+          autoComplete="email"
+          autoCorrect={false}
+          keyboardType="email-address"
+          placeholder="tu@correo.com"
+          spellCheck={false}
+          style={styles.input}
+          textContentType="emailAddress"
+          value={email}
+          onChangeText={setEmail}
+        />
+      </View>
 
       <Button
         title={isSubmitting ? 'Enviando...' : 'Enviar enlace'}
@@ -55,6 +63,24 @@ function getErrorMessage(error: unknown) {
 }
 
 const styles = StyleSheet.create({
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 8 },
+  fieldGroup: {
+    gap: 6,
+  },
+  label: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  helperText: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+  },
   link: { marginTop: 8 },
 })

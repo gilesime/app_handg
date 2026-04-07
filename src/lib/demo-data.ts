@@ -9,23 +9,26 @@ import type {
   RewardTransaction,
   User,
 } from '@/types'
+import { getDefaultUserPreferences, normalizeUserPreferences } from '@/lib/consent'
 
 const now = new Date()
 
-export const demoUser = (overrides?: Partial<User>): User => ({
-  id: 'demo-user',
-  display_name: 'Demo Runner',
-  email: 'demo@loyalrun.app',
-  total_xp: 2840,
-  level: 4,
-  preferences: {
-    units: 'km',
-    notifications_enabled: true,
-    privacy_mode: 'club_only',
-  },
-  created_at: now.toISOString(),
-  ...overrides,
-})
+export const demoUser = (overrides?: Partial<User>): User => {
+  const preferences = normalizeUserPreferences(
+    overrides?.preferences ?? getDefaultUserPreferences()
+  )
+
+  return {
+    id: 'demo-user',
+    display_name: 'Demo Runner',
+    email: 'demo@loyalrun.app',
+    total_xp: 2840,
+    level: 4,
+    created_at: now.toISOString(),
+    ...overrides,
+    preferences,
+  }
+}
 
 const clubThemes = {
   running: { primary_color: '#2563EB', secondary_color: '#93C5FD' },
