@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { ActivityIndicator, StatusBar, StyleSheet, Text, View } from 'react-native'
-import { Stack, useRouter, useSegments } from 'expo-router'
+import { Stack, useRootNavigationState, useRouter, useSegments } from 'expo-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
@@ -35,6 +35,7 @@ export default function RootLayout() {
 }
 
 function AuthProvider() {
+  const rootNavigationState = useRootNavigationState()
   const router = useRouter()
   const segments = useSegments()
   const {
@@ -76,7 +77,7 @@ function AuthProvider() {
   }, [setLoading, setUser])
 
   useEffect(() => {
-    if (isLoading) return
+    if (!rootNavigationState?.key || isLoading) return
 
     const rootSegment = segments[0]
     const inOnboarding = rootSegment === 'onboarding'
@@ -107,27 +108,26 @@ function AuthProvider() {
     if (inAuthGroup || inClubSelection) {
       router.replace('/(tabs)')
     }
-  }, [activeClub, isAuthenticated, isLoading, router, segments])
-
-  if (isLoading) {
-    return (
-      <View style={styles.loadingScreen}>
-        <ActivityIndicator size="large" />
-        <Text style={styles.loadingText}>Cargando LoyalRun...</Text>
-      </View>
-    )
-  }
+  }, [activeClub, isAuthenticated, isLoading, rootNavigationState?.key, router, segments])
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="onboarding" />
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="select-club" />
-      <Stack.Screen name="history" />
-      <Stack.Screen name="devices" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="activity-summary" options={{ presentation: 'modal' }} />
-    </Stack>
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="onboarding" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="select-club" />
+        <Stack.Screen name="history" />
+        <Stack.Screen name="devices" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="activity-summary" options={{ presentation: 'modal' }} />
+      </Stack>
+      {isLoading ? (
+        <View pointerEvents="none" style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" />
+          <Text style={styles.loadingText}>Cargando LoyalRun...</Text>
+        </View>
+      ) : null}
+    </>
   )
 }
 
@@ -162,8 +162,8 @@ async function fetchProfile(sessionUser: SupabaseUser): Promise<User> {
 }
 
 const styles = StyleSheet.create({
-  loadingScreen: {
-    flex: 1,
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
     gap: 12,

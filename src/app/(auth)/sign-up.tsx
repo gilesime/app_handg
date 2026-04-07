@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Alert, Button, StyleSheet, TextInput } from 'react-native'
+import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native'
 import { Link, router } from 'expo-router'
 
 import { AuthScaffold } from '@/components/wireframe/AuthScaffold'
@@ -47,28 +47,40 @@ export default function SignUpScreen() {
   }
 
   return (
-    <AuthScaffold title="Crear cuenta" subtitle="Wireframe funcional para registrar usuarios nuevos.">
+    <AuthScaffold title="Crear cuenta" subtitle="Completa estos datos para abrir tu cuenta y entrar al flujo principal.">
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Nombre visible</Text>
+          <Text style={styles.helperText}>Asi apareceras en rankings, perfil y retos del club.</Text>
         <TextInput
-          placeholder="Nombre visible"
+          placeholder="Ej. Gilberto"
           style={styles.input}
           value={displayName}
           onChangeText={setDisplayName}
         />
+        </View>
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Correo electronico</Text>
+          <Text style={styles.helperText}>Usaremos este correo para iniciar sesion y confirmar tu cuenta si aplica.</Text>
         <TextInput
           autoCapitalize="none"
           keyboardType="email-address"
-          placeholder="Correo"
+          placeholder="tu@correo.com"
           style={styles.input}
           value={email}
           onChangeText={setEmail}
         />
+        </View>
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Password</Text>
+          <Text style={styles.helperText}>Elige una clave segura para proteger tu cuenta.</Text>
         <TextInput
-          placeholder="Password"
+          placeholder="Minimo 8 caracteres"
           secureTextEntry
           style={styles.input}
           value={password}
           onChangeText={setPassword}
         />
+        </View>
 
         <Button
           title={isSubmitting ? 'Creando...' : 'Crear cuenta'}
@@ -88,6 +100,24 @@ function getErrorMessage(error: unknown) {
 }
 
 const styles = StyleSheet.create({
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 8 },
+  fieldGroup: {
+    gap: 6,
+  },
+  label: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  helperText: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+  },
   link: { marginTop: 8 },
 })

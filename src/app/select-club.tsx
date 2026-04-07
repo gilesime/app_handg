@@ -98,6 +98,10 @@ export default function SelectClubScreen() {
 
         <WireframeSection>
           <Text style={styles.sectionTitle}>Unirme por slug</Text>
+          <Text style={styles.label}>Slug del club</Text>
+          <Text style={styles.helperText}>
+            Escribe el identificador corto que te compartio el administrador del club.
+          </Text>
           <TextInput
             autoCapitalize="none"
             placeholder="ej. corredores-centro"
@@ -126,7 +130,22 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '700' },
   section: { gap: 12 },
   sectionTitle: { fontSize: 18, fontWeight: '600' },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 8 },
+  label: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  helperText: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+  },
   row: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, marginBottom: 8 },
   rowTitle: { fontSize: 16, fontWeight: '600' },
 })
