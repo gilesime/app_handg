@@ -46,9 +46,13 @@ export default function SignInScreen() {
           <Text style={styles.helperText}>Ingresa el correo con el que registraste tu cuenta.</Text>
         <TextInput
           autoCapitalize="none"
+          autoComplete="email"
+          autoCorrect={false}
           keyboardType="email-address"
           placeholder="tu@correo.com"
+          spellCheck={false}
           style={styles.input}
+          textContentType="emailAddress"
           value={email}
           onChangeText={setEmail}
         />

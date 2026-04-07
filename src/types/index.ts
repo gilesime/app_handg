@@ -37,6 +37,14 @@ export interface UserPreferences {
   units: 'km' | 'miles'
   notifications_enabled: boolean
   privacy_mode: 'public' | 'club_only' | 'private'
+  privacy_policy_accepted: boolean
+  data_use_accepted: boolean
+  marketing_push_enabled: boolean
+  marketing_email_enabled: boolean
+  in_app_notifications_enabled: boolean
+  communications_choice_recorded: boolean
+  consent_version: string
+  consent_updated_at?: string
 }
 
 export interface ClubMember {

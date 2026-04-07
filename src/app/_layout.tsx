@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, StatusBar, StyleSheet, Text, View } from 'react-native'
 import { Stack, useRootNavigationState, useRouter, useSegments } from 'expo-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
+import { getDefaultUserPreferences, hasCompletedConsent, normalizeUserPreferences } from '@/lib/consent'
 import { supabase } from '@/lib/supabase'
 import { demoUser } from '@/lib/demo-data'
 import { isDemoMode } from '@/lib/demo-mode'
@@ -27,18 +28,30 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <StatusBar barStyle="light-content" />
-          <AuthProvider />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="onboarding" />
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="consent-preferences" />
+            <Stack.Screen name="select-club" />
+            <Stack.Screen name="history" />
+            <Stack.Screen name="devices" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="activity-summary" options={{ presentation: 'modal' }} />
+          </Stack>
+          <AuthGate />
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   )
 }
 
-function AuthProvider() {
+function AuthGate() {
+  const [canNavigate, setCanNavigate] = useState(false)
   const rootNavigationState = useRootNavigationState()
   const router = useRouter()
   const segments = useSegments()
   const {
+    user,
     isLoading,
     isAuthenticated,
     hasCompletedOnboarding,
@@ -46,6 +59,16 @@ function AuthProvider() {
     setLoading,
   } = useAuthStore()
   const { activeClub } = useClubStore()
+
+  useEffect(() => {
+    if (!rootNavigationState?.key) return
+
+    const timeoutId = setTimeout(() => {
+      setCanNavigate(true)
+    }, 0)
+
+    return () => clearTimeout(timeoutId)
+  }, [rootNavigationState?.key])
 
   useEffect(() => {
     if (isDemoMode) {
@@ -77,11 +100,12 @@ function AuthProvider() {
   }, [setLoading, setUser])
 
   useEffect(() => {
-    if (!rootNavigationState?.key || isLoading) return
+    if (!rootNavigationState?.key || !canNavigate || isLoading) return
 
-    const rootSegment = segments[0]
+    const rootSegment = segments[0] as string | undefined
     const inOnboarding = rootSegment === 'onboarding'
     const inAuthGroup = rootSegment === '(auth)'
+    const inConsentPreferences = rootSegment === 'consent-preferences'
     const inClubSelection = rootSegment === 'select-club'
 
     if (!hasCompletedOnboarding) {
@@ -98,6 +122,13 @@ function AuthProvider() {
       return
     }
 
+    if (user && !hasCompletedConsent(user.preferences)) {
+      if (!inConsentPreferences) {
+        router.replace('/consent-preferences' as never)
+      }
+      return
+    }
+
     if (!activeClub) {
       if (!inClubSelection) {
         router.replace('/select-club')
@@ -105,29 +136,18 @@ function AuthProvider() {
       return
     }
 
-    if (inAuthGroup || inClubSelection) {
+    if (inAuthGroup || inConsentPreferences || inClubSelection) {
       router.replace('/(tabs)')
     }
-  }, [activeClub, isAuthenticated, isLoading, rootNavigationState?.key, router, segments])
+  }, [activeClub, canNavigate, isAuthenticated, isLoading, rootNavigationState?.key, router, segments, user])
+
+  if (!isLoading) return null
 
   return (
-    <>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="onboarding" />
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="select-club" />
-        <Stack.Screen name="history" />
-        <Stack.Screen name="devices" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="activity-summary" options={{ presentation: 'modal' }} />
-      </Stack>
-      {isLoading ? (
-        <View pointerEvents="none" style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" />
-          <Text style={styles.loadingText}>Cargando LoyalRun...</Text>
-        </View>
-      ) : null}
-    </>
+    <View pointerEvents="none" style={styles.loadingOverlay}>
+      <ActivityIndicator size="large" />
+      <Text style={styles.loadingText}>Cargando LoyalRun...</Text>
+    </View>
   )
 }
 
@@ -149,16 +169,23 @@ async function fetchProfile(sessionUser: SupabaseUser): Promise<User> {
       email: sessionUser.email ?? '',
       total_xp: 0,
       level: 1,
-      preferences: {
-        units: 'km',
-        notifications_enabled: true,
-        privacy_mode: 'club_only',
-      },
+      preferences: normalizeUserPreferences({
+        ...getDefaultUserPreferences(),
+        privacy_policy_accepted: Boolean(sessionUser.user_metadata?.privacy_policy_accepted),
+        data_use_accepted: Boolean(sessionUser.user_metadata?.data_use_accepted),
+        communications_choice_recorded: Boolean(sessionUser.user_metadata?.communications_choice_recorded),
+        consent_version:
+          (sessionUser.user_metadata?.consent_version as string | undefined) ??
+          getDefaultUserPreferences().consent_version,
+      }),
       created_at: sessionUser.created_at ?? new Date().toISOString(),
     }
   }
 
-  return data as User
+  return {
+    ...(data as User),
+    preferences: normalizeUserPreferences((data as User).preferences),
+  }
 }
 
 const styles = StyleSheet.create({

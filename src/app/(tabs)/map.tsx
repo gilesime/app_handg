@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native'
 import MapView, { Marker, Circle, PROVIDER_GOOGLE } from 'react-native-maps'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import * as Location from 'expo-location'
@@ -30,6 +30,8 @@ export default function MapScreen() {
     enabled: !!activeClub,
   })
 
+  const mapProvider = Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -43,14 +45,14 @@ export default function MapScreen() {
       {/* Map */}
       <MapView
         style={styles.map}
-        provider={PROVIDER_GOOGLE}
+        provider={mapProvider}
         showsUserLocation
         region={
           userLocation
             ? { ...userLocation, latitudeDelta: 0.03, longitudeDelta: 0.03 }
             : undefined
         }
-        customMapStyle={darkMapStyle}
+        customMapStyle={mapProvider ? darkMapStyle : undefined}
       >
         {/* User radius */}
         {userLocation && (

@@ -33,9 +33,13 @@ export default function ForgotPasswordScreen() {
         <Text style={styles.helperText}>Usa el mismo correo con el que inicias sesion en la app.</Text>
         <TextInput
           autoCapitalize="none"
+          autoComplete="email"
+          autoCorrect={false}
           keyboardType="email-address"
           placeholder="tu@correo.com"
+          spellCheck={false}
           style={styles.input}
+          textContentType="emailAddress"
           value={email}
           onChangeText={setEmail}
         />

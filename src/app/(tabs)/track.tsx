@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react'
 import {
-  View, Text, StyleSheet, TouchableOpacity, Alert, Dimensions
+  View, Text, StyleSheet, TouchableOpacity, Alert, Dimensions, Platform
 } from 'react-native'
 import MapView, { Polyline, PROVIDER_GOOGLE } from 'react-native-maps'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -23,6 +23,7 @@ export default function TrackScreen() {
   const buttonScale = useSharedValue(1)
 
   const units = user?.preferences?.units ?? 'km'
+  const mapProvider = Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined
 
   const animatedButton = useAnimatedStyle(() => ({
     transform: [{ scale: buttonScale.value }],
@@ -87,7 +88,7 @@ export default function TrackScreen() {
       {/* Map */}
       <MapView
         style={styles.map}
-        provider={PROVIDER_GOOGLE}
+        provider={mapProvider}
         region={mapRegion}
         showsUserLocation
         followsUserLocation={tracker.isActive}

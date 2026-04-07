@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
-import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Alert, Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { Link, router } from 'expo-router'
 
+import { normalizeUserPreferences } from '@/lib/consent'
 import { AuthScaffold } from '@/components/wireframe/AuthScaffold'
 import { demoUser } from '@/lib/demo-data'
 import { isDemoMode } from '@/lib/demo-mode'
@@ -13,6 +14,8 @@ export default function SignUpScreen() {
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [acceptedPrivacyPolicy, setAcceptedPrivacyPolicy] = useState(false)
+  const [acceptedDataUse, setAcceptedDataUse] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSignUp = async () => {
@@ -21,22 +24,38 @@ export default function SignUpScreen() {
       return
     }
 
+    if (!acceptedPrivacyPolicy || !acceptedDataUse) {
+      Alert.alert(
+        'Consentimiento requerido',
+        'Necesitamos que aceptes la politica de privacidad y el uso de tus datos para crear tu cuenta.'
+      )
+      return
+    }
+
     try {
       setIsSubmitting(true)
-      await auth.signUp(email.trim(), password, displayName.trim())
+      await auth.signUp(email.trim(), password, displayName.trim(), {
+        privacyPolicyAccepted: acceptedPrivacyPolicy,
+        dataUseAccepted: acceptedDataUse,
+      })
       if (isDemoMode) {
         setUser(
           demoUser({
             email: email.trim(),
             display_name: displayName.trim(),
+            preferences: normalizeUserPreferences({
+              privacy_policy_accepted: true,
+              data_use_accepted: true,
+              communications_choice_recorded: false,
+            }),
           })
         )
-        router.replace('/select-club')
+        router.replace('/consent-preferences' as never)
         return
       }
       Alert.alert(
         'Cuenta creada',
-        'Si tu proyecto requiere confirmación por correo, revisa tu email antes de entrar.'
+        'Si tu proyecto requiere confirmacion por correo, revisa tu email antes de entrar. Tus preferencias comerciales las podras definir al iniciar sesion.'
       )
       router.replace('/(auth)/sign-in')
     } catch (error) {
@@ -63,9 +82,13 @@ export default function SignUpScreen() {
           <Text style={styles.helperText}>Usaremos este correo para iniciar sesion y confirmar tu cuenta si aplica.</Text>
         <TextInput
           autoCapitalize="none"
+          autoComplete="email"
+          autoCorrect={false}
           keyboardType="email-address"
           placeholder="tu@correo.com"
+          spellCheck={false}
           style={styles.input}
+          textContentType="emailAddress"
           value={email}
           onChangeText={setEmail}
         />
@@ -80,6 +103,24 @@ export default function SignUpScreen() {
           value={password}
           onChangeText={setPassword}
         />
+        </View>
+
+        <View style={styles.checkboxGroup}>
+          <CheckboxRow
+            checked={acceptedPrivacyPolicy}
+            label="Acepto la politica de privacidad."
+            description="Confirmo que lei el aviso de privacidad y entiendo el tratamiento general de mi informacion."
+            onPress={() => setAcceptedPrivacyPolicy((value) => !value)}
+          />
+          <CheckboxRow
+            checked={acceptedDataUse}
+            label="Autorizo el uso de mis datos para operar la cuenta."
+            description="Incluye autenticacion, actividad deportiva, club, recompensas y soporte dentro de LoyalRun."
+            onPress={() => setAcceptedDataUse((value) => !value)}
+          />
+          <Text style={styles.legalNote}>
+            Las preferencias de comunicaciones comerciales y notificaciones se configuran en el siguiente paso.
+          </Text>
         </View>
 
         <Button
@@ -99,9 +140,80 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Error desconocido'
 }
 
+function CheckboxRow({
+  checked,
+  label,
+  description,
+  onPress,
+}: {
+  checked: boolean
+  label: string
+  description: string
+  onPress: () => void
+}) {
+  return (
+    <TouchableOpacity style={styles.checkboxRow} onPress={onPress} activeOpacity={0.85}>
+      <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
+        {checked ? <Text style={styles.checkboxMark}>✓</Text> : null}
+      </View>
+      <View style={styles.checkboxContent}>
+        <Text style={styles.checkboxLabel}>{label}</Text>
+        <Text style={styles.checkboxDescription}>{description}</Text>
+      </View>
+    </TouchableOpacity>
+  )
+}
+
 const styles = StyleSheet.create({
   fieldGroup: {
     gap: 6,
+  },
+  checkboxGroup: {
+    gap: 12,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#9CA3AF',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 1,
+  },
+  checkboxChecked: {
+    borderColor: '#4F46E5',
+    backgroundColor: '#4F46E5',
+  },
+  checkboxMark: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  checkboxContent: {
+    flex: 1,
+    gap: 3,
+  },
+  checkboxLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  checkboxDescription: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: '#6B7280',
+  },
+  legalNote: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: '#6B7280',
   },
   label: {
     fontSize: 15,

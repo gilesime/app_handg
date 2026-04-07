@@ -1,21 +1,24 @@
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, Modal, Alert, ActivityIndicator
+  TouchableOpacity, Alert, ActivityIndicator, TextInput
 } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useQuery } from '@tanstack/react-query'
+import { getConsentSummary, hasCompletedConsent, normalizeUserPreferences } from '@/lib/consent'
 import { useAuthStore, useClubStore } from '@/stores/activity-store'
 import { auth } from '@/lib/supabase'
-import { badgeApi, clubApi } from '@/services/api'
+import { badgeApi } from '@/services/api'
 import { getLevelProgress } from '@/lib/xp-engine'
 import type { BadgeAward } from '@/types'
 
 export default function ProfileScreen() {
-  const { user, clear: clearAuth } = useAuthStore()
-  const { activeClub, setActiveClub, clear: clearClub } = useClubStore()
-  const [showClubPicker, setShowClubPicker] = useState(false)
+  const { user, setUser, clear: clearAuth } = useAuthStore()
+  const { activeClub, clear: clearClub } = useClubStore()
+  const [displayName, setDisplayName] = useState('')
+  const [email, setEmail] = useState('')
+  const [isSavingProfile, setIsSavingProfile] = useState(false)
 
   const { data: badges, isLoading: loadingBadges } = useQuery({
     queryKey: ['badges', user?.id],
@@ -23,13 +26,54 @@ export default function ProfileScreen() {
     enabled: !!user,
   })
 
-  const { data: clubs } = useQuery({
-    queryKey: ['user-clubs'],
-    queryFn: () => clubApi.getUserClubs(),
-    enabled: !!user,
-  })
-
   const levelInfo = user ? getLevelProgress(user.total_xp) : null
+  const consentPreferences = normalizeUserPreferences(user?.preferences)
+  const consentSummary = getConsentSummary(consentPreferences)
+
+  useEffect(() => {
+    if (!user) return
+    setDisplayName(user.display_name)
+    setEmail(user.email)
+  }, [user])
+
+  const hasProfileChanges = useMemo(() => {
+    if (!user) return false
+    return (
+      displayName.trim() !== user.display_name ||
+      email.trim().toLowerCase() !== user.email.toLowerCase()
+    )
+  }, [displayName, email, user])
+
+  const handleSaveProfile = async () => {
+    if (!user) return
+
+    const nextDisplayName = displayName.trim()
+    const nextEmail = email.trim().toLowerCase()
+
+    if (!nextDisplayName || !nextEmail) {
+      Alert.alert('Campos incompletos', 'Ingresa tu nombre y tu correo para guardar cambios.')
+      return
+    }
+
+    try {
+      setIsSavingProfile(true)
+      const updatedUser = await auth.updateProfile(user, {
+        displayName: nextDisplayName,
+        email: nextEmail,
+      })
+      setUser(updatedUser)
+      Alert.alert(
+        'Perfil actualizado',
+        nextEmail !== user.email.toLowerCase()
+          ? 'Tus cambios se guardaron. Si cambiaste el correo, revisa si tu proyecto requiere confirmacion por email.'
+          : 'Tus datos se guardaron correctamente.'
+      )
+    } catch (error) {
+      Alert.alert('No se pudo actualizar el perfil', getErrorMessage(error))
+    } finally {
+      setIsSavingProfile(false)
+    }
+  }
 
   const handleSignOut = () => {
     Alert.alert('Cerrar sesión', '¿Estás seguro?', [
@@ -91,15 +135,91 @@ export default function ProfileScreen() {
           <StatCard label="Club" value={activeClub?.name ?? '—'} icon="👥" small />
         </View>
 
+        {/* Editable profile */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Mis datos</Text>
+          <View style={styles.formCard}>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Nombre visible</Text>
+              <Text style={styles.fieldHint}>
+                Es el nombre que mostraremos en tu perfil, ranking y retos.
+              </Text>
+              <TextInput
+                autoCapitalize="words"
+                placeholder="Tu nombre"
+                style={styles.input}
+                value={displayName}
+                onChangeText={setDisplayName}
+              />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Correo electronico</Text>
+              <Text style={styles.fieldHint}>
+                Este correo se usa para iniciar sesion y recuperar tu cuenta.
+              </Text>
+              <TextInput
+                autoCapitalize="none"
+                autoComplete="email"
+                autoCorrect={false}
+                keyboardType="email-address"
+                placeholder="tu@correo.com"
+                spellCheck={false}
+                style={styles.input}
+                textContentType="emailAddress"
+                value={email}
+                onChangeText={setEmail}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[
+                styles.primaryAction,
+                (!hasProfileChanges || isSavingProfile) && styles.primaryActionDisabled,
+              ]}
+              onPress={handleSaveProfile}
+              disabled={!hasProfileChanges || isSavingProfile}
+            >
+              <Text style={styles.primaryActionText}>
+                {isSavingProfile ? 'Guardando...' : 'Guardar cambios'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Active club */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Club activo</Text>
           <TouchableOpacity
             style={styles.clubRow}
-            onPress={() => setShowClubPicker(true)}
+            onPress={() => router.push('/select-club')}
           >
             <View style={styles.clubDot} />
-            <Text style={styles.clubRowName}>{activeClub?.name ?? 'Sin club seleccionado'}</Text>
+            <View style={styles.clubRowInfo}>
+              <Text style={styles.clubRowName}>{activeClub?.name ?? 'Sin club seleccionado'}</Text>
+              <Text style={styles.clubRowHint}>
+                Cambia tu club activo o unete a uno nuevo con slug.
+              </Text>
+            </View>
+            <Text style={styles.clubRowArrow}>›</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Privacidad y comunicaciones</Text>
+          <TouchableOpacity
+            style={styles.clubRow}
+            onPress={() => router.push('/consent-preferences' as never)}
+          >
+            <View style={styles.clubDot} />
+            <View style={styles.clubRowInfo}>
+              <Text style={styles.clubRowName}>
+                {hasCompletedConsent(consentPreferences)
+                  ? 'Consentimiento registrado'
+                  : 'Completar consentimiento'}
+              </Text>
+              <Text style={styles.clubRowHint}>{consentSummary}</Text>
+            </View>
             <Text style={styles.clubRowArrow}>›</Text>
           </TouchableOpacity>
         </View>
@@ -135,52 +255,13 @@ export default function ProfileScreen() {
           <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/onboarding')}>
             <Text style={styles.actionRowText}>Ver onboarding</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionRow} onPress={handleSignOut}>
-            <Text style={styles.actionRowTextDanger}>Cerrar sesión</Text>
+          <TouchableOpacity style={styles.dangerAction} onPress={handleSignOut}>
+            <Text style={styles.dangerActionText}>Cerrar sesión</Text>
           </TouchableOpacity>
         </View>
 
         <View style={{ height: 32 }} />
       </ScrollView>
-
-      {/* Club picker modal */}
-      <Modal visible={showClubPicker} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Cambiar club</Text>
-            <ScrollView>
-              {(clubs ?? []).map((club) => (
-                <TouchableOpacity
-                  key={club.id}
-                  style={[
-                    styles.clubPickerRow,
-                    activeClub?.id === club.id && styles.clubPickerRowActive,
-                  ]}
-                  onPress={() => {
-                    setActiveClub(club, (club as any).membership)
-                    setShowClubPicker(false)
-                  }}
-                >
-                  <View style={[styles.clubPickerDot, { backgroundColor: club.theme_config.primary_color }]} />
-                  <View style={styles.clubPickerInfo}>
-                    <Text style={styles.clubPickerName}>{club.name}</Text>
-                    <Text style={styles.clubPickerType}>{club.sport_type}</Text>
-                  </View>
-                  {activeClub?.id === club.id && (
-                    <Text style={styles.clubPickerCheck}>✓</Text>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <TouchableOpacity
-              style={styles.modalClose}
-              onPress={() => setShowClubPicker(false)}
-            >
-              <Text style={styles.modalCloseText}>Cerrar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   )
 }
@@ -214,6 +295,10 @@ function BadgeItem({ award }: { award: BadgeAward }) {
       <Text style={styles.badgeName} numberOfLines={2}>{award.badge.name}</Text>
     </View>
   )
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Error desconocido'
 }
 
 const styles = StyleSheet.create({
@@ -252,14 +337,60 @@ const styles = StyleSheet.create({
 
   section: { paddingHorizontal: 16, marginTop: 20 },
   sectionTitle: { fontSize: 17, fontWeight: '700', color: '#FFFFFF', marginBottom: 12 },
+  formCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 14,
+    padding: 16,
+    gap: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.07)',
+  },
+  fieldGroup: {
+    gap: 6,
+  },
+  fieldLabel: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  fieldHint: {
+    color: 'rgba(255,255,255,0.45)',
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.14)',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    color: '#FFFFFF',
+  },
+  primaryAction: {
+    backgroundColor: '#6366F1',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  primaryActionDisabled: {
+    opacity: 0.5,
+  },
+  primaryActionText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 15,
+  },
 
   clubRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 14,
     padding: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)',
   },
+  clubRowInfo: { flex: 1 },
   clubDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#6366F1' },
-  clubRowName: { flex: 1, color: '#FFFFFF', fontSize: 15, fontWeight: '500' },
+  clubRowName: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
+  clubRowHint: { color: 'rgba(255,255,255,0.45)', fontSize: 12, marginTop: 2 },
   clubRowArrow: { color: 'rgba(255,255,255,0.3)', fontSize: 20 },
 
   emptyBadges: { padding: 20, alignItems: 'center' },
@@ -279,24 +410,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   actionRowText: { color: '#FFFFFF', fontSize: 15, fontWeight: '500' },
-  actionRowTextDanger: { color: '#EF4444', fontSize: 15, fontWeight: '500' },
-
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
-  modalCard: {
-    backgroundColor: '#1A1A2E', borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: 24, paddingBottom: 40, maxHeight: '70%',
+  dangerAction: {
+    marginTop: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.35)',
+    backgroundColor: 'rgba(239,68,68,0.12)',
+    paddingVertical: 14,
+    alignItems: 'center',
   },
-  modalTitle: { fontSize: 20, fontWeight: '700', color: '#FFFFFF', marginBottom: 20 },
-  clubPickerRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)',
-  },
-  clubPickerRowActive: { backgroundColor: 'rgba(99,102,241,0.1)', borderRadius: 10, paddingHorizontal: 8 },
-  clubPickerDot: { width: 12, height: 12, borderRadius: 6 },
-  clubPickerInfo: { flex: 1 },
-  clubPickerName: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
-  clubPickerType: { color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 1 },
-  clubPickerCheck: { color: '#6366F1', fontSize: 18, fontWeight: '700' },
-  modalClose: { marginTop: 20, alignItems: 'center' },
-  modalCloseText: { color: 'rgba(255,255,255,0.5)', fontSize: 16 },
+  dangerActionText: { color: '#FCA5A5', fontSize: 15, fontWeight: '700' },
 })
