@@ -2,6 +2,21 @@
 
 Aplicacion mobile para clubes deportivos con tracking de actividad, rewards y gamificacion.
 
+## Rama activa de UX
+
+- Rama de trabajo: `feat/ux-competitive-wireframes`
+- Necesidad de negocio: acercar la experiencia de `app_handg` a los patrones de simplicidad y funcionalidad de apps lideres de running sin perder el diferencial de club, rewards y gamificacion.
+- Problemas que resuelve esta rama:
+  - dar una accion principal mas clara en `home`
+  - mejorar la lectura de progreso y continuidad del usuario
+  - elevar `history` desde una lista funcional hacia una vista mas comparable con mercado
+  - conectar mejor el cierre de actividad con metas semanales y recompensas
+
+## Referencias de producto
+
+- Documento de benchmark y wireframes: `docs/competitive-wireframes.md`
+- Archivos nuevos creados para esta rama documentan en su cabecera la rama y la necesidad de negocio que resuelven.
+
 ## Stack
 
 | Capa | Tecnologia |
@@ -38,9 +53,12 @@ app_handg/
 │   │       ├── rewards.tsx
 │   │       └── track.tsx
 │   ├── components/
+│   │   └── dashboard/
+│   │       └── PrimaryFocusCard.tsx
 │   ├── hooks/
 │   │   └── useActivityTracker.ts
 │   ├── lib/
+│   │   ├── competitive-insights.ts
 │   │   ├── supabase.ts
 │   │   └── xp-engine.ts
 │   ├── services/
@@ -88,11 +106,13 @@ Ya existen y quedaron conectadas estas pantallas:
 - `consent-preferences`: captura y gestion de consentimiento para notificaciones operativas, push comercial, email comercial e in-app notifications
 - `select-club`: elegir club existente o unirse por `slug`
 - `home`: resumen general del usuario
+- `home`: ahora prioriza una accion principal y el progreso semanal
 - `track`: tracking de actividad
-- `activity-summary`: resumen al finalizar una actividad
+- `activity-summary`: resumen al finalizar una actividad con continuidad semanal e insights
 - `map`: ofertas cercanas
 - `rewards`: lista y canje de recompensas
 - `profile`: perfil, badges y cambio de club
+- `history`: historial con filtros por rango y resumen agregado
 
 Las nuevas pantallas de auth y seleccion de club son wireframes funcionales, pensadas para flujo y validacion, no para diseno final.
 
@@ -143,3 +163,4 @@ npm run type-check
 - Si quieres una siguiente fase, lo natural seria agregar onboarding, recovery password y pantallas CRUD para retos o historial de actividades.
 - La arquitectura propuesta para wearables esta en `docs/wearables-architecture.md`.
 - La base inicial de schema para wearables esta en `supabase/migrations/002_wearable_foundation.sql`.
+- La rama `feat/ux-competitive-wireframes` implementa la primera iteracion visual y funcional derivada del benchmark competitivo.
